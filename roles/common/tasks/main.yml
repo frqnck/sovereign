@@ -38,6 +38,7 @@
     - molly-guard
     - vim
     - zsh
+    - python-pip
   tags:
     - dependencies
 
