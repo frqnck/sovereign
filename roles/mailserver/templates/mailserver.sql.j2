@@ -96,11 +96,11 @@ virtual_user.domain not in deleted_domains and
 virtual_user.domain_pk_id in active_domains %}
 {# Active user, not in database - add it #}
 INSERT INTO "virtual_users"  ("domain_id", "password" , "email")
-	VALUES (
-		'{{ virtual_user.domain_pk_id }}',
-		'{{ virtual_user.password_hash }}',
-		'{{ virtual_user.account }}@{{ virtual_user.domain }}'
-	);
+    VALUES (
+        '{{ virtual_user.domain_pk_id }}',
+        '{{ virtual_user.password_hash }}',
+        '{{ virtual_user.account }}@{{ virtual_user.domain }}'
+    );
 
 {% elif mail_users.stdout.find(virtual_user.account + '@' + virtual_user.domain) != -1 and
 not virtual_user.active|default(True) %}
@@ -111,6 +111,14 @@ DELETE FROM "virtual_users" WHERE
 
 {# store this user for later checking #}
 {% do deleted_users.append(virtual_user.account + '@' + virtual_user.domain) %}
+
+{% elif mail_users.stdout.find(virtual_user.account + '@' + virtual_user.domain) != -1 and
+virtual_user.active|default(True) and
+virtual_user.force|default(False) %}
+{# active user, in database - reset password #}
+UPDATE "virtual_users" set password='{{ virtual_user.password_hash }}' WHERE
+    domain_id = '{{ virtual_user.domain_pk_id }}' AND
+    email = '{{ virtual_user.account }}@{{ virtual_user.domain }}';
 
 {% endif %}
 {% endfor %}
@@ -134,8 +142,7 @@ DELETE FROM "virtual_users" WHERE
 virtual_alias.active|default(True) and
 source_domain not in deleted_domains and
 dest_domain not in deleted_domains and
-virtual_alias.domain_pk_id in active_domains and
-virtual_alias.destination in mail_users.stdout_lines %}
+virtual_alias.domain_pk_id in active_domains %}
 {# active alias, active domains, not in database - add it #}
 INSERT INTO "virtual_aliases" ("domain_id", "source", "destination")
     VALUES ('{{ virtual_alias.domain_pk_id }}', '{{ virtual_alias.source }}', '{{virtual_alias.destination }}');

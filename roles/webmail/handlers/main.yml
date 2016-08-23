@@ -3,6 +3,10 @@
   become_user: "{{ db_admin_username }}"
   notify: import sql carddav
 
+- name: init roundcube database
+  command: psql -d {{ webmail_db_database }} -f /var/lib/roundcube/SQL/postgres.initial.sql
+  become_user: "{{ db_admin_username }}"
+
 - name: import sql carddav
   action: shell PGPASSWORD='{{ webmail_db_password }}' psql -h localhost -d {{ webmail_db_database }} -U {{ webmail_db_username }} -f /var/lib/roundcube/plugins/carddav/dbinit/postgres.sql
 

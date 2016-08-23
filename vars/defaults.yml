@@ -113,6 +113,7 @@ roundcube_plugins:
   - managesieve
   - carddav
   - twofactor_gauthenticator
+  - password
 webmail_domain: "{{ mail_server_hostname }}"
 webmail_db_username: "roundcube"
 # webmail_db_password: (required)
