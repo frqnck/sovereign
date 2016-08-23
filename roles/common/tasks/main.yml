@@ -94,6 +94,10 @@
   notify: restart apache
   when: ansible_distribution_release == 'trusty'
 
+- name: Set PHP max file upload size
+  lineinfile: dest=/etc/php5/apache2/php.ini regexp='^upload_max_filesize' line='upload_max_filesize = {{ php_upload_file_size }}'
+  notify: restart apache
+
 - name: Create decrypted directory (even if encfs isn't used)
   file: state=directory path=/decrypted
 
