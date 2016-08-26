@@ -1,0 +1,51 @@
+---
+# playbook for installation of [Rainloop](http://www.rainloop.net)
+
+# this playbook requires the following variables be set by you in `user.yml` or `private.yml`
+# (depending on if you're using the Vault or not);
+#   * `rainloop_db_password`
+
+- name: install dependencies
+  apt: pkg={{ item }} state=installed
+  with_items:
+    - php5-curl
+  tags:
+    - dependencies
+
+- name: make install directory
+  file: path=/var/www/rainloop state=directory
+
+- name: fetch latest rainloop source
+  get_url: url=http://repository.rainloop.net/v2/webmail/rainloop-community-latest.zip dest=/root
+
+- name: extract rainloop source
+  unarchive: src=/root/rainloop-community-latest.zip creates=/root/rainloop/v/{{ rainloop_version }} copy=no dest=/var/www/rainloop
+
+- name: update directory permissions
+  command: find . -type d -exec chmod 755 {} \; chdir=/var/www/rainloop
+
+- name: update file permissions
+  command: find . -type f -exec chmod 644 {} \; chdir=/var/www/rainloop
+
+- name: update data dir permissions
+  file: path=/var/www/rainloop/data owner=www-data group=www-data mode=0750 state=directory recurse=true
+
+- name: create rainloop db user
+  postgresql_user: name={{ rainloop_db_username }} password="{{ rainloop_db_password }}" state=present
+  become_user: "{{db_admin_username}}"
+
+- name: create rainloop database
+  postgresql_db: name={{ rainloop_db_database }} state=present owner={{ rainloop_db_username }}
+  become_user: "{{db_admin_username}}"
+
+- name: Enable php5-mcrypt
+  file: src=/etc/php5/mods-available/mcrypt.ini dest=/etc/php5/apache2/conf.d/20-mcrypt.ini owner=root group=root state=link
+  notify: reload apache
+
+- name: Install apache config for rainloop
+  template: src=etc_apache2_sites-available_rainloop.j2 dest=/etc/apache2/sites-available/rainloop.conf group=root owner=root force=yes
+  notify: reload apache
+
+- name: activate rainloop config
+  command: a2ensite rainloop
+  notify: reload apache

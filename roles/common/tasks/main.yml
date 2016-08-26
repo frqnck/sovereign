@@ -38,6 +38,8 @@
     - molly-guard
     - vim
     - zsh
+    - python-pip
+    - unzip
   tags:
     - dependencies
 
