@@ -60,7 +60,7 @@
   ignore_errors: true
 
 - name: Run the domain check
-  shell: PGPASSWORD='{{ mail_db_password }}' psql -h localhost -d {{ mail_db_database }} -U {{ mail_db_username }} -f /etc/postfix/domaincheck.sql --set ON_ERROR_STOP=1
+  shell: PGPASSWORD='{{ mail_db_password }}' psql -h localhost -d {{ mail_db_database }} -U {{ mail_db_username }} -f /etc/postfix/domaincheck.sql --set ON_ERROR_STOP=1 | tail -n +3 | head -n -2 | sed -E 's/^[[:space:]]+//'
   register: mail_domains
   ignore_errors: true
 
