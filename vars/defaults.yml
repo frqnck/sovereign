@@ -148,3 +148,13 @@ wallabag_domain: "read.{{ domain }}"
 wallabag_db_username: wallabag
 # wallabag_db_password: (required)
 wallabag_db_database: wallabag
+
+# webmail pro
+webmailpro_db_username: webmailpro
+webmailpro_db_database: webmailpro
+
+# rainloop
+rainloop_version: 1.10.3.151
+rainloop_db_username: rainloop
+rainloop_db_database: rainloop
+

@@ -1,0 +1,23 @@
+<VirtualHost *:80>
+    ServerName {{ webmail_domain }}
+
+    Redirect permanent / https://{{ webmail_domain }}/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName {{ webmail_domain }}
+
+    Include /etc/apache2/ssl.conf
+
+    DocumentRoot /var/www/rainloop
+
+    <Directory /var/www/rainloop/>
+      Options +FollowSymLinks
+      # This is needed to parse /var/www/rainloop/.htaccess. See its
+      # content before setting AllowOverride to None.
+      Require all granted
+    </Directory>
+
+    CustomLog /var/log/apache2/rainloop_access.log combined
+    ErrorLog /var/log/apache2/rainloop_error.log
+</VirtualHost>

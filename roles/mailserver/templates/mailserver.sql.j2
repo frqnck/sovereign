@@ -57,19 +57,21 @@ CREATE INDEX IF NOT EXISTS source_idx ON public.virtual_aliases (source);
 {# set a place to capture active domains #}
 {% set active_domains = [] %}
 
+/* domain processing from the config */
+
 {% for virtual_domain in mail_virtual_domains %}
 {% if virtual_domain.active|default(True) %}
 {# we need to track all active domains to avoid inserting
    aliases below for domains that we aren't adding #}
 {% do active_domains.append(virtual_domain.pk_id) %}
 {% endif %}
-{% if mail_domains.stdout.find(virtual_domain.name) == -1 and
+{% if not virtual_domain.pk_id ~ " | " ~ virtual_domain.name in mail_domains.stdout_lines and
 virtual_domain.active|default(True) %}
 {# active domain, not in database - add it #}
 INSERT INTO "virtual_domains" ("id", "name")
         VALUES ('{{ virtual_domain.pk_id }}', '{{ virtual_domain.name }}');
 
-{% elif mail_domains.stdout.find(virtual_domain.name) != -1 and
+{% elif virtual_domain.pk_id ~ " | " ~ virtual_domain.name in mail_domains.stdout_lines and
 not virtual_domain.active|default(True) %}
 {# inactive domain, in database - remove it #}
 DELETE FROM "virtual_domains" WHERE
@@ -80,6 +82,26 @@ DELETE FROM "virtual_domains" WHERE
 {% do deleted_domains.append(virtual_domain.name) %}
 {% endif %}
 {% endfor %}
+
+/* domain processing from the db */
+/* active: {{ active_domains }} */
+/* deleted: {{ deleted_domains }} */
+/* db: {{ mail_domains.stdout_lines }} */
+
+{# do the check in reverse - remove what is in db and not in config #}
+{% for mail_domain in mail_domains.stdout_lines %}
+{# now we have to get the key and the name to avoid clobbering w/ key reuse #}
+{% set key,domain = mail_domain|split_psql %}
+/* {{ key }} / {{ domain }} */
+{% if key|int not in active_domains and key|int not in deleted_domains %}
+{# inactive domain, in database - remove it #}
+DELETE FROM "virtual_domains" WHERE
+  name = '{{ domain }}' and id = {{ key }};
+
+{% endif %}
+{% endfor %}
+
+/* user processing from the config */
 
 {# set up a place to store deleted users #}
 {% set deleted_users = [] %}
@@ -123,6 +145,8 @@ UPDATE "virtual_users" set password='{{ virtual_user.password_hash }}' WHERE
 {% endif %}
 {% endfor %}
 
+/* user processing from the db */
+
 {# do the check in reverse - delete anything that is in the db and not in config #}
 {% for email in mail_users.stdout_lines %}
 {% if email not in active_users and email not in deleted_users %}
@@ -132,6 +156,8 @@ DELETE FROM "virtual_users" WHERE
 {% do mail_users.stdout_lines.remove(email) %}
 {% endif %}
 {% endfor %}
+
+/* alias processing */
 
 {% if mail_virtual_aliases is defined %}
 {% for virtual_alias in mail_virtual_aliases %}
