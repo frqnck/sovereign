@@ -9,6 +9,7 @@
   apt: pkg={{ item }} state=installed
   with_items:
     - php5-curl
+    - php5-mcrypt
   tags:
     - dependencies
 

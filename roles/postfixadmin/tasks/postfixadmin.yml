@@ -1,0 +1,45 @@
+---
+# install and configure postfixadmin for management of mail activities
+
+- name: download postfixadmin
+  get_url: >
+    url=http://sourceforge.net/projects/postfixadmin/files/latest/download
+    dest=/tmp/postfixadmin-latest.tar.gz
+
+- name: create target path
+  file:
+    dest: "{{ postfixadmin_path }}"
+    state: directory
+    recurse: yes
+    group: www-data
+    owner: www-data
+
+- name: extract postfixadmin
+  shell: tar -C {{ postfixadmin_path }} --strip-components=1 -xvf /tmp/postfixadmin-latest.tar.gz
+  args:
+    creates: "{{ postfixadmin_path }}/index.php"
+  become_user: www-data
+
+- name: install apache vhost config
+  template: src=etc_apache2_sites-available_postfixadmin.conf.j2 dest=/etc/apache2/sites-available/postfixadmin.conf
+
+- name: activate vhost
+  command: a2ensite postfixadmin creates=/etc/apache2/sites-enabled/postfixadmin.conf
+  notify: restart apache
+
+- name: generate setup password for config
+  shell: php -r "echo '{{ postfixadmin_setup_salt }}:' . sha1('{{ postfixadmin_setup_salt }}{{ ':' }}{{ postfixadmin_setup_password }}');"
+  register: postfixadmin_hashed_setup_password
+
+- name: configure postfixadmin
+  template: src=etc_postfixadmin_config.inc.php.j2 dest={{ postfixadmin_path }}/config.inc.php mode=0640
+
+  # we need to do this in order to use SHA-512 passwords through `doveadm`
+- name: add www-data to dovecot group
+  user: name=www-data append=yes groups=dovecot
+
+- name: set up postfixadmin db user
+  postgresql_user: login_host=localhost login_user={{ db_admin_username }} login_password="{{ db_admin_password }}" name={{ mail_db_username }} password="{{ mail_db_password }}" state=present
+
+- name: Create database for postfixadmin
+  postgresql_db: login_host=localhost login_user={{ db_admin_username }} login_password="{{ db_admin_password }}" name={{ mail_db_database }} state=present owner={{ mail_db_username }}

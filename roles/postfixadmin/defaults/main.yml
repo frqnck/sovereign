@@ -1,0 +1,8 @@
+---
+# defaults for mailserver role
+
+postfixadmin_path: /var/www/postfixadmin
+postfixadmin_vhost: mailadmin.{{ domain }}
+
+# set these up in the vault, or uncomment and set here
+# postfixadmin_setup_password: CHANGEME

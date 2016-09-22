@@ -1,0 +1,23 @@
+<VirtualHost *:80>
+    ServerName {{ postfixadmin_vhost }}
+
+    Redirect permanent / https://{{ postfixadmin_vhost }}/
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName {{ postfixadmin_vhost }}
+
+    Include /etc/apache2/ssl.conf
+
+    DocumentRoot {{ postfixadmin_path }}
+
+    <Directory {{ postfixadmin_path }}/>
+      Options +FollowSymLinks
+      # This is needed to parse {{ postfixadmin_path }}/.htaccess. See its
+      # content before setting AllowOverride to None.
+      Require all granted
+    </Directory>
+
+    CustomLog /var/log/apache2/postfixadmin_access.log combined
+    ErrorLog /var/log/apache2/postfixadmin_error.log
+</VirtualHost>

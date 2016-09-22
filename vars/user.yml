@@ -11,6 +11,7 @@ encfs_password: TODO    # NOTE: must not contain dollar sign characters '$'
 
 # database
 db_admin_username: postgres
+db_hostname: 127.0.0.1
 
 # ircbouncer
 irc_nick: TODO
@@ -18,6 +19,9 @@ irc_ident: TODO
 irc_realname: TODO
 irc_quitmsg: TODO
 irc_timezone: TODO      #Example: "America/New_York"
+
+# postfixadmin
+use_postfix_admin: false
 
 # mailserver
 mail_virtual_domains:
