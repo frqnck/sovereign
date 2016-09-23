@@ -17,3 +17,7 @@
 - include: autoconfig.yml
   tags: autoconfig
 
+- include: local.yml
+  tags:
+    - mailserver_local
+    - local

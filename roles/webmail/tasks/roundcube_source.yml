@@ -18,6 +18,7 @@
 - name: determine if /var/lib/roundcube stayed behind
   command: test -d /var/lib/roundcube
   register: roundcube_dir_exists
+  ignore_errors: yes
 
 - name: Clean up krufty /var/lib/roundcube so we can symlink it
   file: path=/var/lib/roundcube state=absent

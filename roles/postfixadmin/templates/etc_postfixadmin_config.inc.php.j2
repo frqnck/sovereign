@@ -132,7 +132,7 @@ $CONF['smtp_port'] = '25';
 // authlib = support for courier-authlib style passwords
 // dovecot:CRYPT-METHOD = use dovecotpw -s 'CRYPT-METHOD'. Example: dovecot:CRAM-MD5
 //   (WARNING: don't use dovecot:* methods that include the username in the hash - you won't be able to login to PostfixAdmin in this case)
-$CONF['encrypt'] = 'dovecot:SHA512';
+$CONF['encrypt'] = 'dovecot:SHA512-CRYPT';
 
 // In what flavor should courier-authlib style passwords be encrypted?
 // md5 = {md5} + base64 encoded md5 hash

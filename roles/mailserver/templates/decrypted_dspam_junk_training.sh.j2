@@ -1,0 +1,57 @@
+#!/bin/bash
+#  (c) 2005 Casey Allen Shobe
+#  Released under BSD license.  See http://opensource.org/licenses/bsd-license.php
+
+# Bail if already running (in case we are slammed with spam to train from):
+processes=$(ps ax)
+if [ `echo "${processes}" | grep junk_training.sh | wc -l` -gt 2 ]; then
+        echo "ERROR: junk_training_script is already running!"
+        exit 1
+fi
+
+# Subscripts:
+cutscript=/decrypted/dspam/antispam_update-cut.sh
+filterscript=/decrypted/dspam/antispam_update-filter.sh
+dspamuser=dspam
+mailroot=/decrypted
+
+# add additional domains here
+domains=({{ domain_list.stdout_lines|join(' ') }})
+
+echo $( date )
+for domain in ${domains[@]}; do
+  if [ `find "${mailroot}/${domain}/" -type d -name ".Junk" | wc -l` -gt 0 ]; then
+    echo "Running for domain ${domain}"
+    for user in `find "${mailroot}/${domain}/" -maxdepth 1 -mindepth 1 -type d| cut -d '/' -f 4 | sort`; do
+      maildir="${mailroot}/${domain}/${user}"
+      if [ `find "${maildir}/" -type d -name ".Junk" | wc -l` -gt 0 ]; then
+        dspamuser="${user}@${domain}"
+        echo " - $dspamuser"
+        if [ ! -d "${maildir}/.Spam/" ]; then
+            # make our destination directory if it doesn't already exist
+            # and subscribe the user to it
+            doveadm mailbox create -u ${dspamuser} -s Spam
+        fi
+        if [ ! -d "${maildir}/.Ham/" ]; then
+            # make our Ham directory if it doesn't already exist and
+            # subscribe the user to it
+            doveadm mailbox create -u ${dspamuser} -s Ham
+        fi
+        if [ -d "${maildir}/.Junk/cur/" ]; then
+          find "${maildir}/.Junk/cur/" -type f \
+               -exec ${cutscript} {} Spam \; \
+               -exec ${filterscript} "${dspamuser}" spam error {} \; \
+               -exec mv {} "${maildir}/.Spam/cur/" \;
+        fi
+        if [ -d "${maildir}/.Ham/cur" ]; then
+          find "${maildir}/.Ham/cur/" -type f \
+               -exec ${cutscript} {} Innocent \; \
+               -exec ${filterscript} "${dspamuser}" innocent error {} \; \
+               -exec mv {} "${maildir}/cur/" \; #TODO: Should call maildrop?
+        fi
+      fi
+    done
+  fi
+done
+
+echo ---

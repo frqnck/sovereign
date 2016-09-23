@@ -1,0 +1,34 @@
+---
+# user-specific mods
+
+- name: determine what domains we have configured
+  shell: ls -l /decrypted | grep vmail | awk '{ print $NF }'
+  register: domain_list
+  changed_when: False
+  tags:
+    - dspam
+
+- name: install dspam training script
+  template: src=decrypted_dspam_junk_training.sh.j2 dest=/decrypted/dspam/junk_training.sh mode=0700 owner=dspam group=dspam
+  tags:
+    - dspam
+
+- name: install additional training scripts
+  copy: src=decrypted_dspam_{{ item }} dest=/decrypted/dspam/{{ item }} mode=0700 owner=dspam group=dspam
+  with_items:
+    - antispam_update-cut.sh
+    - antispam_update-filter.sh
+  tags:
+    - dspam
+
+- name: install cron job to delete spam older than 30 days
+  cron: name="delete spam older than 30 days" hour="0" minute="0" job="find /decrypted -type d -name .Spam -o -name .Junk | while read x; do find $x -type f -daystart -mtime +30 -delete; done"
+  tags:
+    - cron
+
+- name: install cron job to train dspam
+  cron: name="train dspam" minute="0,30" job="/decrypted/dspam/junk_training.sh >> /var/log/dspam_training.log"
+  tags:
+    - dspam
+    - cron
+
