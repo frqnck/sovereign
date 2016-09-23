@@ -12,13 +12,36 @@
 - name: Create OpenDKIM config directory
   file: state=directory path=/etc/opendkim group=opendkim owner=opendkim
 
-- name: Create OpenDKIM key directories
+- name: generate sql file for domain list with postfixadmin
+  copy: content="select domain from domain;" dest=/tmp/domains.sql
+  changed_when: false
+
+- name: run sql file to get domains list
+  shell: psql -d mailserver -f /tmp/domains.sql | tail -n +4 | head -n -2 | awk '{ print $1 }'
+  become_user: "{{ db_admin_username }}"
+  register: postfixadmin_domains
+  when: use_postfix_admin|default(False)
+  changed_when: false
+
+- name: Create OpenDKIM key directories (non-PA)
   file: state=directory path=/etc/opendkim/keys/{{ item.name }} group=opendkim owner=opendkim
   with_items: "{{ mail_virtual_domains }}"
+  when: not use_postfix_admin|default(False)
 
-- name: Generate OpenDKIM keys
+- name: Generate OpenDKIM keys (non-PA)
   command: opendkim-genkey -r -d {{ item.name }} -D /etc/opendkim/keys/{{ item.name }}/ creates=/etc/opendkim/keys/{{ item.name }}/default.private
   with_items: "{{ mail_virtual_domains }}"
+  when: not use_postfix_admin|default(False)
+
+- name: Create OpenDKIM key directories (PA)
+  file: state=directory path=/etc/opendkim/keys/{{ item }} group=opendkim owner=opendkim
+  with_items: "{{ postfixadmin_domains.stdout_lines }}"
+  when: use_postfix_admin|default(False)
+
+- name: Generate OpenDKIM keys (PA)
+  command: opendkim-genkey -r -d {{ item }} -D /etc/opendkim/keys/{{ item }}/ creates=/etc/opendkim/keys/{{ item }}/default.private
+  with_items: "{{ postfixadmin_domains.stdout_lines }}"
+  when: use_postfix_admin|default(False)
 
 - name: Put opendkim.conf into place
   copy: src=etc_opendkim.conf dest=/etc/opendkim.conf owner=opendkim group=opendkim
