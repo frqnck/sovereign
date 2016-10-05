@@ -13,3 +13,6 @@ It also requires the following variables to be set up in the Vault:
 * postfixadmin_setup_salt (a random long character string)
 
 These can be set up in plain text. They will be hashed as appropriate during setup.
+
+Once you've run this playbook, follow the instructions for Postfix Admin to create
+an admin user with the setup password. 
