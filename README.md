@@ -1,4 +1,22 @@
-[![Build Status](https://travis-ci.org/sovereign/sovereign.svg?branch=master)](https://travis-ci.org/sovereign/sovereign)
+**NOTE:** This fork of Sovereign is my own. It incorporates changes that the upstream maintainers were either too slow to implement or else decided not to merge for reasons unknown. These include features like:
+
+* Roundcube from source (since it's missing from Debian Jessie)
+* Giving users the ability to change their password via Roundcube
+* Fixes for race condition in dropping/reloading the entire mailserver db on every run (WTF)
+* Upgrade to Ansible v2.x
+* Storage of passwords in Ansible Vault instead of in the vars files (hashed or otherwise)
+* Lint cleanup for Ansible v2
+* Fixes for OpenDKIM scripts that are broken in the upstream
+* Postfix Admin
+* Teardown of roles/tasks previously installed
+
+Since I've gone off on my own, you can expect this to divurge even further from the original sovereign project.  I'll likely remove things that are unnecessary, like `newebe` and `wallabag` simply because I don't use them and they aren't worth the time to maintain.
+
+To be clear - this is up here for you to use if you want. It reflects what I'm running in production. Things are mostly tested, but as you can imagine, it's difficult to make changes to a production configuration and roll those up and sanitize them for release.  If you find bugs or things that don't work as advertised, please open an issue. Since this is production-ready, if it's a component I use, I'll likely get it fixed right away.
+
+The rest of this README is from the original project, modified by me to incorporate the Vault and some other niceties. I'll carve it up as I remove or modify stuff.
+
+-----
 
 Introduction
 ============
