@@ -2,6 +2,9 @@
 #  (c) 2005 Casey Allen Shobe
 #  Released under BSD license.  See http://opensource.org/licenses/bsd-license.php
 
+# Redirect stderr to stdout in case `find` or other commands fail
+exec 2>&1
+
 # Bail if already running (in case we are slammed with spam to train from):
 processes=$(ps ax)
 if [ `echo "${processes}" | grep junk_training.sh | wc -l` -gt 2 ]; then
