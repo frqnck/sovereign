@@ -2,7 +2,7 @@
 # Removes logwatch configuration
 
 - name: Remove logwatch cronjob
-  cron: name=logwatch state=absent
+  cron: name=logwatch job=/usr/sbin/logwatch state=absent
 
 - name: Remove logwatch package
   apt: pkg=logwatch state=absent
